@@ -1,29 +1,25 @@
-# ==========================================
-# 🐳 Dockerfile for Vite + React Frontend
-# ==========================================
 
-# Step 1: Base Image
-# node:20-alpine is an ultra-lightweight Node.js Linux image
-FROM node:22-alpine
+FROM node:22-alpine AS build
 
-# Step 2: Working Directory inside the container
+
 WORKDIR /app
 
-# Step 3: Layer Caching for Node Dependencies
-# Copy package files first so Docker caches the installed packages
 COPY package*.json ./
+# RUN npm install
 
-# Step 4: Install Dependencies
-RUN npm install
+RUN npm ci
 
-# Step 5: Copy application code into container
+
 COPY . .
 
-# Step 6: Expose the Vite development server port
-EXPOSE 5174
+# RUN npm install for development. 
+RUN npm run build
 
-# Step 7: Environment variables
-ENV VITE_API_URL=http://localhost:5000
+# server with nginx
+FROM nginx:alpine
 
+COPY --from=build /app/dist /usr/share/nginx/html
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5174"]
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
